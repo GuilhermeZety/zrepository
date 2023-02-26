@@ -7,33 +7,48 @@ import 'dart:convert';
 import 'package:streaming_shared_preferences/streaming_shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import 'package:zrepository/configs.dart';
-import 'package:zrepository/my_class.dart';
+import 'package:zrepository/zclass.dart';
 
 class ZRepository{
-  static setInstances(Map<String, dynamic> instances) => Configs().setInstanceConfigs(instances);
+  static Zconfig configs = Zconfig();
+  static setInstances(Map<Type, ZClass Function(Map<String, dynamic>)> instances) {
+    configs.setInstanceConfigs(instances.map((key, value) => MapEntry(key.toString(), value)));
+  }
 
+  static void verifyInstances() { 
+    try{
+      if(configs.suportable.isEmpty) throw Exception('You need to set the instances before use the zrepository');
+    }catch(error, stackTrace){
+      Error.throwWithStackTrace(error, stackTrace);
+    }
+  }
   /* -------------------------------------------------------------------------- */
   /*                                    ADD                                     */
   /* -------------------------------------------------------------------------- */
       /* -------------------------------- SAVE ONE -------------------------------- */
-      static Future<bool> save({required String key, required MyClass object}) async {
+      static Future<bool> save({required String key, required ZClass object}) async {
+        verifyInstances();
         return (await StreamingSharedPreferences.instance).setString(key, object.toJson());
       }
 
       /* -------------------------------- SAVE LIST ------------------------------- */
       static Future<bool> saveList({
         required String key, 
-        required List<MyClass> list
-      }) async => (await StreamingSharedPreferences.instance).setStringList(key, list.map((e) {
-        e.id ??= const Uuid().v4();
-        return e.toJson();
-      }).toList());
+        required List<ZClass> list
+      }) async {
+        verifyInstances();
+        return (await StreamingSharedPreferences.instance).setStringList(key, list.map((e) {
+          e.id ??= const Uuid().v4();
+          return e.toJson();
+        }).toList());
+      }
 
       /* ----------------------------- ADD ONE IN LIST ---------------------------- */
-      static Future<bool> addInList<T extends MyClass>({
+      static Future<bool> addInList<T extends ZClass>({
         required String key, 
         required T object
       }) async {
+        verifyInstances();
         if(T.toString() == 'MyClass') throw Exception('You can\'t add a MyClass object in a list. Use a class that extends MyClass');
         List<T>? itens = await getList<T>(key);
         
@@ -51,21 +66,26 @@ class ZRepository{
   /*                                     GET                                    */
   /* -------------------------------------------------------------------------- */
       /* --------------------------------- GET ONE -------------------------------- */
-      static Future<T?> get<T extends MyClass>(String key) async {
+      static Future<T?> get<T extends ZClass>(String key) async {
+        verifyInstances();
+        if(T.toString() == 'MyClass') throw Exception('You can\'t add a MyClass object in a list. Use a class that extends MyClass');
         Object? object = (await StreamingSharedPreferences.instance).getString(key, defaultValue: '');
         
-        if(object == '' || !Configs().suportable.containsKey(T.toString())) return null;
+        if(object == '' || !Zconfig().suportable.containsKey(T.toString())) return null;
 
-        return Configs().suportable[T.toString()](jsonDecode(object as String));
+        return configs.suportable[T.toString()](jsonDecode(object as String));
       }
 
       /* -------------------------------- GET LIST -------------------------------- */
-      static Future<List<T>?> getList<T extends MyClass>(String key) async {
+      static Future<List<T>?> getList<T extends ZClass>(String key) async {
+        verifyInstances();
+        if(T.toString() == 'MyClass') throw Exception('You can\'t add a MyClass object in a list. Use a class that extends MyClass');
+        if(!configs.suportable.containsKey(T.toString())) throw Exception('Dont suport this type');
+        
         var list = (await StreamingSharedPreferences.instance).getStringList(key, defaultValue: []);
         
-        if(!Configs().suportable.containsKey(T.toString())) return null;
 
-        return list.getValue().map<T>((e) => Configs().suportable[T.toString()](jsonDecode(e))).toList();
+        return list.getValue().map<T>((e) => configs.suportable[T.toString()](jsonDecode(e))).toList();
       }
   /* ----------------------------------- ... ---------------------------------- */
 
@@ -75,7 +95,9 @@ class ZRepository{
   /*                                   REMOVE                                   */
   /* -------------------------------------------------------------------------- */
       /* ------------------------------- REMOVE ONE ------------------------------- */
-      static Future<bool> removeEpecific<T extends MyClass>(String key, {required T item}) async {
+      static Future<bool> removeEpecific<T extends ZClass>(String key, {required T item}) async {
+        verifyInstances();
+        if(T.toString() == 'MyClass') throw Exception('You can\'t add a MyClass object in a list. Use a class that extends MyClass');
         var itens = await getList<T>(key);
 
         if(itens == null || itens.isEmpty) return false;
@@ -92,12 +114,14 @@ class ZRepository{
   /* -------------------------------------------------------------------------- */
   /*                                   STREAM                                   */
   /* -------------------------------------------------------------------------- */
-  Future<Stream<List<T>>> stream<T extends MyClass>(String key) async {
+  Future<Stream<List<T>>> stream<T extends ZClass>(String key) async {
+    verifyInstances();
+    if(T.toString() == 'MyClass') throw Exception('You can\'t add a MyClass object in a list. Use a class that extends MyClass');
     var p = (await StreamingSharedPreferences.instance).getStringList(key, defaultValue: []);
 
-    final fromMap = Configs().suportable[T.toString()];
+    final fromMap = configs.suportable[T.toString()];
 
-    if(Configs().suportable[T.toString()] == null) throw Exception('This class is not suportable');
+    if(configs.suportable[T.toString()] == null) throw Exception('This class is not suportable');
 
     return p.map((event) => event.map<T>((e) => fromMap(jsonDecode(e))).toList());
   }

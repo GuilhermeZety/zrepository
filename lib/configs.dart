@@ -1,14 +1,14 @@
-class Configs{
+class Zconfig{
   //SingleTon
-    Configs._();
-    static final Configs _instance = Configs._();
-    factory Configs() => Configs._instance;
+    Zconfig._();
+    static final Zconfig _instance = Zconfig._();
+    factory Zconfig() => Zconfig._instance;
 
     Map<String, dynamic> suportable = {};
 
     /// Same
     /// {
-    ///   'Person': Person.fromMap,
+    ///   Person: Person.fromMap,
     /// }
     ///
     ///
