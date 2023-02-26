@@ -1,3 +1,10 @@
+## 0.0.4
+
+* Changed core to better support the clean architecture;
+* Decreased minimum version of dart to run;
+* Increased unit tests;
+* Improved better error handling;
+
 ## 0.0.1
 
-* TODO: Describe initial release.
+* Initial version, implemented core of package with your simple concept
