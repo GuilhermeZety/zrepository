@@ -5,6 +5,7 @@ library zrepository;
 import 'dart:convert';
 import 'package:uuid/uuid.dart';
 import 'package:streaming_shared_preferences/streaming_shared_preferences.dart';
+import 'package:zrepository/features/zrepository/errors/not_instances_config_exception.dart';
 
 import 'package:zrepository/features/zrepository/logic/zconfig.dart';
 import 'package:zrepository/features/zrepository/models/zclass.dart';
@@ -26,7 +27,7 @@ class ZRepository{
 
   /// It checks if the instances are set.
   static void verifyInstances() { 
-    if(configs.supported.isEmpty) throw Exception('You need to set the instances before use the zrepository');
+    if(configs.supported.isEmpty) throw NotInstancesConfigException('You need to set the instances before use the zrepository');
   }
   /* -------------------------------------------------------------------------- */
   /*                                    ADD                                     */
