@@ -173,3 +173,6 @@ class Person extends ZClass{
 }
 ```
 
+Hope you like it!
+
+made with ❤️ by GuilhermeZety
