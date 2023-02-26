@@ -1,5 +1,6 @@
-## 0.0.4
+## 0.0.5
 
+* Added Exaple
 * Changed core to better support the clean architecture;
 * Decreased minimum version of dart to run;
 * Increased unit tests;
