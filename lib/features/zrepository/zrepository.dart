@@ -6,6 +6,8 @@ import 'dart:convert';
 import 'package:uuid/uuid.dart';
 import 'package:streaming_shared_preferences/streaming_shared_preferences.dart';
 import 'package:zrepository/features/zrepository/errors/not_instances_config_exception.dart';
+import 'package:zrepository/features/zrepository/errors/not_suportable_class_exception.dart';
+import 'package:zrepository/features/zrepository/errors/not_uses_zclass_exception.dart';
 
 import 'package:zrepository/features/zrepository/logic/zconfig.dart';
 import 'package:zrepository/features/zrepository/models/zclass.dart';
@@ -27,7 +29,7 @@ class ZRepository{
 
   /// It checks if the instances are set.
   static void verifyInstances() { 
-    if(configs.supported.isEmpty) throw NotInstancesConfigException('You need to set the instances before use the zrepository');
+    if(configs.supported.isEmpty) throw NotInstancesConfigException();
   }
   /* -------------------------------------------------------------------------- */
   /*                                    ADD                                     */
@@ -80,7 +82,7 @@ class ZRepository{
         required T object
       }) async {
         verifyInstances();
-        if(T.toString() == 'MyClass') throw Exception('You can\'t add a MyClass object in a list. Use a class that extends MyClass');
+        if(T.toString() == 'ZClass') throw NotUsesZClassException();
         List<T>? itens = await getList<T>(key);
         
         itens ??= [];
@@ -106,7 +108,7 @@ class ZRepository{
      ///   A Future<T?>
       static Future<T?> get<T extends ZClass>(String key) async {
         verifyInstances();
-        if(T.toString() == 'MyClass') throw Exception('You can\'t add a MyClass object in a list. Use a class that extends MyClass');
+        if(T.toString() == 'ZClass') throw NotUsesZClassException();
         Object? object = (await StreamingSharedPreferences.instance).getString(key, defaultValue: '');
         
         if(object == '' || !ZConfig().supported.containsKey(T.toString())) return null;
@@ -124,7 +126,7 @@ class ZRepository{
      ///   A list of objects of type T.
       static Future<List<T>?> getList<T extends ZClass>(String key) async {
         verifyInstances();
-        if(T.toString() == 'MyClass') throw Exception('You can\'t add a MyClass object in a list. Use a class that extends MyClass');
+        if(T.toString() == 'ZClass') throw NotUsesZClassException();
         if(!configs.supported.containsKey(T.toString())) throw Exception('Dont suport this type');
         
         var list = (await StreamingSharedPreferences.instance).getStringList(key, defaultValue: []);
@@ -150,7 +152,7 @@ class ZRepository{
      ///   A Future<bool>
       static Future<bool> removeEpecific<T extends ZClass>(String key, {required T item}) async {
         verifyInstances();
-        if(T.toString() == 'MyClass') throw Exception('You can\'t add a MyClass object in a list. Use a class that extends MyClass');
+        if(T.toString() == 'ZClass') throw NotUsesZClassException();
         var itens = await getList<T>(key);
 
         if(itens == null || itens.isEmpty) return false;
@@ -180,12 +182,12 @@ class ZRepository{
  ///   A stream of a list of objects of type T.
   static Future<Stream<List<T>>> stream<T extends ZClass>(String key) async {
     verifyInstances();
-    if(T.toString() == 'MyClass') throw Exception('You can\'t add a MyClass object in a list. Use a class that extends MyClass');
+    if(T.toString() == 'ZClass') throw NotUsesZClassException();
     var p = (await StreamingSharedPreferences.instance).getStringList(key, defaultValue: []);
 
     final fromMap = configs.supported[T.toString()];
 
-    if(configs.supported[T.toString()] == null) throw Exception('This class is not suportable');
+    if(configs.supported[T.toString()] == null) throw NotSuportableClassException();
 
     return p.map((event) => event.map<T>((e) => fromMap(jsonDecode(e))).toList());
   }
